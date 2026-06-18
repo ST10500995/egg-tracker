@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en-ZA">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="A simple daily egg collection and sales tracker for Santabogela Poultry Farm workers.">
+    <meta name="theme-color" content="#1d3557">
+    <title>Farm Egg Tracker</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <header class="app-header">
+        <div>
+            <p class="eyebrow">Santabogela Poultry Farm</p>
+            <h1>Egg Tracker</h1>
+        </div>
+        <button id="install-button" class="icon-button" type="button" hidden title="Install app">+</button>
+    </header>
+
+    <main>
+        <section class="summary-grid" aria-label="Farm stock summary">
+            <article class="summary-card">
+                <span>Collected</span>
+                <strong id="total-collected">0</strong>
+            </article>
+            <article class="summary-card">
+                <span>Sold</span>
+                <strong id="total-sold">0</strong>
+            </article>
+            <article class="summary-card">
+                <span>Trays Sold</span>
+                <strong id="total-trays-sold">0</strong>
+            </article>
+            <article class="summary-card">
+                <span>Damaged</span>
+                <strong id="total-damaged">0</strong>
+            </article>
+            <article class="summary-card stock-card">
+                <span>Current Stock</span>
+                <strong id="current-stock">0</strong>
+            </article>
+            <article class="summary-card loan-card">
+                <span>Loaned Out</span>
+                <strong id="total-loaned">0</strong>
+            </article>
+        </section>
+
+        <section class="panel daily-panel">
+            <div class="section-heading">
+                <div>
+                    <p class="eyebrow">Workers</p>
+                    <h2>Worker Names</h2>
+                </div>
+            </div>
+
+            <form id="worker-form" class="worker-form">
+                <div class="form-row">
+                    <label for="new-worker-name">Add Worker Name</label>
+                    <input id="new-worker-name" name="workerName" type="text" placeholder="e.g. Thabo">
+                </div>
+                <button class="secondary-button" type="submit">Save Worker</button>
+            </form>
+
+            <div id="worker-list" class="worker-list" aria-live="polite"></div>
+        </section>
+
+        <section class="panel loan-panel">
+            <div class="section-heading">
+                <div>
+                    <p class="eyebrow">Daily Entry</p>
+                    <h2>Add Today&apos;s Numbers</h2>
+                </div>
+                <span id="save-status" class="save-status" aria-live="polite"></span>
+            </div>
+
+            <form id="entry-form" class="entry-form">
+                <div class="form-row">
+                    <label for="entry-date">Date</label>
+                    <input id="entry-date" name="date" type="date" required>
+                </div>
+
+                <div class="form-row">
+                    <label for="worker-name">Select Worker Name</label>
+                    <select id="worker-name" name="worker" required>
+                        <option value="">Select worker</option>
+                    </select>
+                </div>
+
+                <div class="number-grid">
+                    <div class="form-row">
+                        <label for="eggs-collected">Eggs Collected</label>
+                        <input id="eggs-collected" name="collected" type="number" min="0" step="1" inputmode="numeric" placeholder="0">
+                    </div>
+
+                    <div class="form-row">
+                        <label for="eggs-sold">Eggs Sold</label>
+                        <input id="eggs-sold" name="sold" type="number" min="0" step="1" inputmode="numeric" placeholder="0">
+                    </div>
+
+                    <div class="form-row">
+                        <label for="trays-sold">Egg Trays Sold</label>
+                        <input id="trays-sold" name="traysSold" type="number" min="0" step="1" inputmode="numeric" placeholder="0">
+                    </div>
+
+                    <div class="form-row">
+                        <label for="eggs-damaged">Damaged Eggs</label>
+                        <input id="eggs-damaged" name="damaged" type="number" min="0" step="1" inputmode="numeric" placeholder="0">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <label for="entry-notes">Notes</label>
+                    <textarea id="entry-notes" name="notes" rows="3" placeholder="Optional notes about deliveries, quality, or customers"></textarea>
+                </div>
+
+                <button class="primary-button" type="submit">Save Daily Entry</button>
+            </form>
+        </section>
+
+        <section class="panel daily-panel">
+            <div class="section-heading">
+                <div>
+                    <p class="eyebrow">Customer Credit</p>
+                    <h2>Loaned Eggs</h2>
+                </div>
+                <span id="loan-status" class="save-status" aria-live="polite"></span>
+            </div>
+
+            <form id="loan-form" class="entry-form">
+                <div class="form-row">
+                    <label for="loan-date">Date</label>
+                    <input id="loan-date" name="date" type="date" required>
+                </div>
+
+                <div class="form-row">
+                    <label for="loan-worker">Sales Worker</label>
+                    <select id="loan-worker" name="worker" required>
+                        <option value="">Select worker</option>
+                    </select>
+                </div>
+
+                <div class="form-row">
+                    <label for="customer-name">Customer Name</label>
+                    <input id="customer-name" name="customer" type="text" placeholder="Customer or business name" required>
+                </div>
+
+                <div class="number-grid">
+                    <div class="form-row">
+                        <label for="loan-eggs">Eggs Loaned</label>
+                        <input id="loan-eggs" name="eggs" type="number" min="0" step="1" inputmode="numeric" placeholder="0">
+                    </div>
+
+                    <div class="form-row">
+                        <label for="loan-trays">Trays Loaned</label>
+                        <input id="loan-trays" name="trays" type="number" min="0" step="1" inputmode="numeric" placeholder="0">
+                    </div>
+
+                    <div class="form-row">
+                        <label for="loan-amount">Amount Owed</label>
+                        <input id="loan-amount" name="amount" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0.00">
+                    </div>
+
+                    <div class="form-row">
+                        <label for="loan-status-field">Payment Status</label>
+                        <select id="loan-status-field" name="status">
+                            <option value="Unpaid">Unpaid</option>
+                            <option value="Partly Paid">Partly Paid</option>
+                            <option value="Paid">Paid</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <label for="loan-notes">Notes</label>
+                    <textarea id="loan-notes" name="notes" rows="3" placeholder="Payment promise, phone number, or delivery notes"></textarea>
+                </div>
+
+                <button class="primary-button" type="submit">Save Loan Record</button>
+            </form>
+        </section>
+
+        <section class="panel loan-panel">
+            <div class="section-heading">
+                <div>
+                    <p class="eyebrow">History</p>
+                    <h2>Daily Records</h2>
+                </div>
+                <div class="toolbar">
+                    <button id="export-button" class="secondary-button" type="button">Export CSV</button>
+                    <button id="export-loans-button" class="secondary-button" type="button">Export Loans</button>
+                    <button id="clear-button" class="danger-button" type="button">Clear</button>
+                </div>
+            </div>
+
+            <div class="filter-row">
+                <input id="history-search" type="search" placeholder="Search by worker, date, or note">
+                <select id="history-range" aria-label="Filter history range">
+                    <option value="all">All records</option>
+                    <option value="7">Last 7 days</option>
+                    <option value="30">Last 30 days</option>
+                </select>
+            </div>
+
+            <div id="empty-state" class="empty-state">
+                No records yet. Add the first daily entry above.
+            </div>
+
+            <div class="table-wrap">
+                <table id="history-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Worker</th>
+                            <th>Collected</th>
+                            <th>Sold</th>
+                            <th>Trays Sold</th>
+                            <th>Damaged</th>
+                            <th>Stock Change</th>
+                            <th>Notes</th>
+                        </tr>
+                    </thead>
+                    <tbody id="history-body"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="panel">
+            <div class="section-heading">
+                <div>
+                    <p class="eyebrow">Loan History</p>
+                    <h2>Customers Owing</h2>
+                </div>
+            </div>
+
+            <div id="loan-empty-state" class="empty-state">
+                No loan records yet.
+            </div>
+
+            <div class="table-wrap">
+                <table id="loan-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Customer</th>
+                            <th>Worker</th>
+                            <th>Eggs</th>
+                            <th>Trays</th>
+                            <th>Amount</th>
+                            <th>Status</th>
+                            <th>Notes</th>
+                        </tr>
+                    </thead>
+                    <tbody id="loan-body"></tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <template id="row-template">
+        <tr>
+            <td data-label="Date"></td>
+            <td data-label="Worker"></td>
+            <td data-label="Collected"></td>
+            <td data-label="Sold"></td>
+            <td data-label="Trays Sold"></td>
+            <td data-label="Damaged"></td>
+            <td data-label="Stock Change"></td>
+            <td data-label="Notes"></td>
+        </tr>
+    </template>
+
+    <template id="loan-row-template">
+        <tr>
+            <td data-label="Date"></td>
+            <td data-label="Customer"></td>
+            <td data-label="Worker"></td>
+            <td data-label="Eggs"></td>
+            <td data-label="Trays"></td>
+            <td data-label="Amount"></td>
+            <td data-label="Status"></td>
+            <td data-label="Notes"></td>
+        </tr>
+    </template>
+
+    <script src="app.js"></script>
+</body>
+
+</html>

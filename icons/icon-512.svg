@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-label="Egg Tracker icon">
+    <rect width="512" height="512" rx="112" fill="#1d3557"/>
+    <ellipse cx="256" cy="270" rx="118" ry="156" fill="#ffdd57"/>
+    <path d="M168 318c48 48 128 58 184 8" fill="none" stroke="#ffffff" stroke-width="28" stroke-linecap="round"/>
+    <circle cx="214" cy="236" r="19" fill="#1d3557"/>
+    <circle cx="298" cy="236" r="19" fill="#1d3557"/>
+</svg>
