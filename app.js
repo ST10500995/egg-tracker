@@ -1,6 +1,8 @@
 const STORAGE_KEY = "santabogela-egg-tracker-records";
 const WORKERS_KEY = "santabogela-egg-tracker-workers";
 const LOANS_KEY = "santabogela-egg-tracker-loans";
+const SYNC_QUEUE_KEY = "santabogela-egg-tracker-google-sync-queue";
+const GOOGLE_SHEETS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwsuAOcDrZQmH7ksvoOQLy4EvC2KQpd41lCL--LWgRry_wUSJXPVYAgm70M7916Z_ZH/exec";
 const DEFAULT_WORKERS = [
     "Mashele - Farm Worker",
     "Natalie - Sales",
@@ -42,6 +44,7 @@ const totals = {
 let records = loadRecords();
 let loans = loadLoans();
 let workers = loadWorkers();
+let syncQueue = loadSyncQueue();
 let deferredInstallPrompt = null;
 
 function selectTab(tabName) {
@@ -100,6 +103,14 @@ function loadLoans() {
     }
 }
 
+function loadSyncQueue() {
+    try {
+        return JSON.parse(localStorage.getItem(SYNC_QUEUE_KEY)) || [];
+    } catch (error) {
+        return [];
+    }
+}
+
 function saveRecords() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
 }
@@ -110,6 +121,10 @@ function saveLoans() {
 
 function saveWorkers() {
     localStorage.setItem(WORKERS_KEY, JSON.stringify(workers));
+}
+
+function saveSyncQueue() {
+    localStorage.setItem(SYNC_QUEUE_KEY, JSON.stringify(syncQueue));
 }
 
 function today() {
@@ -294,6 +309,51 @@ function showSavedMessage(message) {
     }, 2800);
 }
 
+function isGoogleSheetsConnected() {
+    return GOOGLE_SHEETS_WEB_APP_URL.trim().startsWith("https://");
+}
+
+function queueGoogleSheetSync(type, item) {
+    const payload = {
+        type: type,
+        app: "Santabogela Egg Tracker",
+        sentAt: new Date().toISOString(),
+        item: item
+    };
+
+    syncQueue.push(payload);
+    saveSyncQueue();
+    return flushGoogleSheetSync();
+}
+
+async function flushGoogleSheetSync() {
+    if (!isGoogleSheetsConnected() || syncQueue.length === 0 || !navigator.onLine) {
+        return false;
+    }
+
+    const remaining = [];
+
+    for (const payload of syncQueue) {
+        try {
+            await fetch(GOOGLE_SHEETS_WEB_APP_URL, {
+                method: "POST",
+                mode: "no-cors",
+                headers: {
+                    "Content-Type": "text/plain;charset=utf-8"
+                },
+                body: JSON.stringify(payload),
+                keepalive: true
+            });
+        } catch (error) {
+            remaining.push(payload);
+        }
+    }
+
+    syncQueue = remaining;
+    saveSyncQueue();
+    return remaining.length === 0;
+}
+
 function buildCsv() {
     const headers = ["Date", "Worker", "Collected", "Sold", "Trays Sold", "Damaged", "Stock Change", "Notes"];
     const rows = records
@@ -377,7 +437,7 @@ function downloadLoansCsv() {
     URL.revokeObjectURL(link.href);
 }
 
-form.addEventListener("submit", function (event) {
+form.addEventListener("submit", async function (event) {
     event.preventDefault();
 
     const data = new FormData(form);
@@ -409,11 +469,18 @@ form.addEventListener("submit", function (event) {
     document.querySelector("#entry-date").value = today();
     document.querySelector("#trays-sold").value = "0";
     document.querySelector("#eggs-damaged").value = "0";
-    showSavedMessage("Daily entry saved.");
+    if (!isGoogleSheetsConnected()) {
+        showSavedMessage("Daily entry saved on this phone. Google Sheets is not connected yet.");
+    } else {
+        showSavedMessage("Daily entry saved. Sending to Google Sheets...");
+        const synced = await queueGoogleSheetSync("daily_record", record);
+        showSavedMessage(synced ? "Daily entry saved and sent to Google Sheets." : "Daily entry saved. It will sync when internet returns.");
+    }
+
     render();
 });
 
-loanForm.addEventListener("submit", function (event) {
+loanForm.addEventListener("submit", async function (event) {
     event.preventDefault();
 
     const data = new FormData(loanForm);
@@ -444,7 +511,14 @@ loanForm.addEventListener("submit", function (event) {
     saveLoans();
     loanForm.reset();
     document.querySelector("#loan-date").value = today();
-    loanStatus.textContent = "Loan record saved.";
+    if (!isGoogleSheetsConnected()) {
+        loanStatus.textContent = "Loan record saved on this phone. Google Sheets is not connected yet.";
+    } else {
+        loanStatus.textContent = "Loan record saved. Sending to Google Sheets...";
+        const synced = await queueGoogleSheetSync("customer_loan", loan);
+        loanStatus.textContent = synced ? "Loan record saved and sent to Google Sheets." : "Loan record saved. It will sync when internet returns.";
+    }
+
     window.setTimeout(function () {
         loanStatus.textContent = "";
     }, 2800);
@@ -510,6 +584,8 @@ window.addEventListener("beforeinstallprompt", function (event) {
     installButton.hidden = false;
 });
 
+window.addEventListener("online", flushGoogleSheetSync);
+
 installButton.addEventListener("click", async function () {
     if (!deferredInstallPrompt) {
         return;
@@ -530,3 +606,4 @@ document.querySelector("#loan-date").value = today();
 selectTab("daily");
 renderWorkers();
 render();
+flushGoogleSheetSync();

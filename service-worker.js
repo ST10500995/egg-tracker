@@ -1,4 +1,4 @@
-const CACHE_NAME = "egg-tracker-v2";
+const CACHE_NAME = "egg-tracker-v3";
 const APP_FILES = [
     "./",
     "./index.html",
