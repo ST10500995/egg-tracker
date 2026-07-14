@@ -27,6 +27,8 @@ const exportButton = document.querySelector("#export-button");
 const exportLoansButton = document.querySelector("#export-loans-button");
 const clearButton = document.querySelector("#clear-button");
 const installButton = document.querySelector("#install-button");
+const tabButtons = document.querySelectorAll("[data-tab]");
+const tabPanels = document.querySelectorAll("[data-tab-panel]");
 
 const totals = {
     collected: document.querySelector("#total-collected"),
@@ -41,6 +43,37 @@ let records = loadRecords();
 let loans = loadLoans();
 let workers = loadWorkers();
 let deferredInstallPrompt = null;
+
+function selectTab(tabName) {
+    tabButtons.forEach(function (button) {
+        const isActive = button.dataset.tab === tabName;
+        button.classList.toggle("is-active", isActive);
+        button.setAttribute("aria-selected", String(isActive));
+        button.tabIndex = isActive ? 0 : -1;
+    });
+
+    tabPanels.forEach(function (panel) {
+        panel.hidden = panel.dataset.tabPanel !== tabName;
+    });
+}
+
+tabButtons.forEach(function (button, index) {
+    button.addEventListener("click", function () {
+        selectTab(button.dataset.tab);
+    });
+
+    button.addEventListener("keydown", function (event) {
+        if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") {
+            return;
+        }
+
+        event.preventDefault();
+        const direction = event.key === "ArrowRight" ? 1 : -1;
+        const nextIndex = (index + direction + tabButtons.length) % tabButtons.length;
+        tabButtons[nextIndex].focus();
+        selectTab(tabButtons[nextIndex].dataset.tab);
+    });
+});
 
 function loadRecords() {
     try {
@@ -466,10 +499,8 @@ clearButton.addEventListener("click", function () {
     }
 
     records = [];
-    loans = [];
     saveRecords();
-    saveLoans();
-    showSavedMessage("Records cleared.");
+    showSavedMessage("Daily records cleared.");
     render();
 });
 
@@ -496,5 +527,6 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 
 document.querySelector("#entry-date").value = today();
 document.querySelector("#loan-date").value = today();
+selectTab("daily");
 renderWorkers();
 render();

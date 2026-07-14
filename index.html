@@ -48,7 +48,17 @@
             </article>
         </section>
 
-        <section class="panel daily-panel">
+        <nav class="tab-list" role="tablist" aria-label="Egg tracker sections">
+            <button class="tab-button is-active" id="daily-tab" type="button" role="tab"
+                aria-selected="true" aria-controls="daily-entry-panel" data-tab="daily">Daily Records</button>
+            <button class="tab-button" id="loans-tab" type="button" role="tab"
+                aria-selected="false" aria-controls="loan-entry-panel" data-tab="loans">Customer Loans</button>
+            <button class="tab-button" id="workers-tab" type="button" role="tab"
+                aria-selected="false" aria-controls="workers-panel" data-tab="workers">Workers</button>
+        </nav>
+
+        <section id="workers-panel" class="panel worker-panel tab-panel" role="tabpanel"
+            aria-labelledby="workers-tab" data-tab-panel="workers" hidden>
             <div class="section-heading">
                 <div>
                     <p class="eyebrow">Workers</p>
@@ -67,7 +77,8 @@
             <div id="worker-list" class="worker-list" aria-live="polite"></div>
         </section>
 
-        <section class="panel loan-panel">
+        <section id="daily-entry-panel" class="panel daily-panel tab-panel" role="tabpanel"
+            aria-labelledby="daily-tab" data-tab-panel="daily">
             <div class="section-heading">
                 <div>
                     <p class="eyebrow">Daily Entry</p>
@@ -120,7 +131,8 @@
             </form>
         </section>
 
-        <section class="panel daily-panel">
+        <section id="loan-entry-panel" class="panel loan-panel tab-panel" role="tabpanel"
+            aria-labelledby="loans-tab" data-tab-panel="loans" hidden>
             <div class="section-heading">
                 <div>
                     <p class="eyebrow">Customer Credit</p>
@@ -182,7 +194,7 @@
             </form>
         </section>
 
-        <section class="panel loan-panel">
+        <section class="panel daily-panel tab-panel" data-tab-panel="daily">
             <div class="section-heading">
                 <div>
                     <p class="eyebrow">History</p>
@@ -190,8 +202,7 @@
                 </div>
                 <div class="toolbar">
                     <button id="export-button" class="secondary-button" type="button">Export CSV</button>
-                    <button id="export-loans-button" class="secondary-button" type="button">Export Loans</button>
-                    <button id="clear-button" class="danger-button" type="button">Clear</button>
+                    <button id="clear-button" class="danger-button" type="button">Clear Daily Records</button>
                 </div>
             </div>
 
@@ -227,12 +238,13 @@
             </div>
         </section>
 
-        <section class="panel">
+        <section class="panel loan-panel tab-panel" data-tab-panel="loans" hidden>
             <div class="section-heading">
                 <div>
                     <p class="eyebrow">Loan History</p>
                     <h2>Customers Owing</h2>
                 </div>
+                <button id="export-loans-button" class="secondary-button" type="button">Export Loans</button>
             </div>
 
             <div id="loan-empty-state" class="empty-state">

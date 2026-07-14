@@ -79,7 +79,7 @@ main {
 
 .summary-grid {
     display: grid;
-    grid-template-columns: repeat(5, minmax(0, 1fr));
+    grid-template-columns: repeat(6, minmax(0, 1fr));
     gap: 0.85rem;
     margin-bottom: 1rem;
 }
@@ -131,8 +131,50 @@ main {
     margin-bottom: 1rem;
 }
 
+.tab-list {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    padding: 0.35rem;
+    border: 0.0625rem solid var(--line);
+    border-radius: 0.7rem;
+    background: #ffffff;
+    box-shadow: 0 0.35rem 1rem rgba(29, 53, 87, 0.08);
+}
+
+.tab-button {
+    min-height: 3.25rem;
+    border-radius: 0.5rem;
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+    font-weight: 700;
+    padding: 0.7rem;
+}
+
+.tab-button:hover,
+.tab-button:focus-visible {
+    background: var(--blue-soft);
+    color: var(--blue);
+    outline: 0.1875rem solid rgba(69, 123, 157, 0.18);
+}
+
+.tab-button.is-active {
+    background: var(--blue);
+    color: #ffffff;
+}
+
+.tab-panel[hidden] {
+    display: none;
+}
+
 .daily-panel {
     border-left: 0.35rem solid var(--yellow);
+}
+
+.worker-panel {
+    border-left: 0.35rem solid var(--blue);
 }
 
 .loan-panel {
@@ -362,7 +404,7 @@ td {
 
 @media screen and (max-width: 820px) {
     .summary-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-columns: repeat(3, minmax(0, 1fr));
     }
 
     .number-grid,
@@ -394,6 +436,22 @@ td {
     .summary-card {
         min-height: 6rem;
         padding: 0.85rem;
+    }
+
+    .summary-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .tab-list {
+        gap: 0.25rem;
+        padding: 0.25rem;
+    }
+
+    .tab-button {
+        min-height: 3.5rem;
+        padding: 0.5rem 0.3rem;
+        font-size: 0.82rem;
+        line-height: 1.2;
     }
 
     .table-wrap {
