@@ -222,7 +222,7 @@ Send the Web app URL to Codex.
 Codex will paste it into `app.js` here:
 
 ```javascript
-const GOOGLE_SHEETS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwsuAOcDrZQmH7ksvoOQLy4EvC2KQpd41lCL--LWgRry_wUSJXPVYAgm70M7916Z_ZH/exec";
+const GOOGLE_SHEETS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbx4CfuAQMxU8WCh_6Tk5RJGv09mgBRw_9nJpTUn34_4ITw8G2F3tg1g41jZvWfNPQcL/exec";
 ```
 
 
@@ -238,4 +238,5 @@ function doGet(e) {
 }
 
 Then Codex will push the update to GitHub Pages.
+
 

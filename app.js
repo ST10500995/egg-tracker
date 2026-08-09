@@ -2,7 +2,7 @@ const STORAGE_KEY = "santabogela-egg-tracker-records";
 const WORKERS_KEY = "santabogela-egg-tracker-workers";
 const LOANS_KEY = "santabogela-egg-tracker-loans";
 const SYNC_QUEUE_KEY = "santabogela-egg-tracker-google-sync-queue";
-const GOOGLE_SHEETS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwsuAOcDrZQmH7ksvoOQLy4EvC2KQpd41lCL--LWgRry_wUSJXPVYAgm70M7916Z_ZH/exec";
+const GOOGLE_SHEETS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbx4CfuAQMxU8WCh_6Tk5RJGv09mgBRw_9nJpTUn34_4ITw8G2F3tg1g41jZvWfNPQcL/exec";
 const DEFAULT_WORKERS = [
     "Mashele - Farm Worker",
     "Natalie - Sales",
@@ -717,4 +717,5 @@ flushGoogleSheetSync().then(function () {
     return loadSharedGoogleSheetData({ showStatus: true });
 });
 window.setInterval(loadSharedGoogleSheetData, 60000);
+
 
