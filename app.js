@@ -267,7 +267,6 @@ function renderHistory() {
     visibleRecords.forEach(function (record) {
         const row = rowTemplate.content.firstElementChild.cloneNode(true);
         const cells = row.querySelectorAll("td");
-        const change = stockChange(record);
 
         cells[0].textContent = formatDate(record.date);
         cells[1].textContent = record.worker;
@@ -275,9 +274,7 @@ function renderHistory() {
         cells[3].textContent = formatNumber(record.sold);
         cells[4].textContent = formatNumber(record.traysSold || 0);
         cells[5].textContent = formatNumber(record.damaged);
-        cells[6].textContent = (change >= 0 ? "+" : "") + formatNumber(change);
-        cells[6].className = change >= 0 ? "positive" : "negative";
-        cells[7].textContent = record.notes || "-";
+        cells[6].textContent = record.notes || "-";
 
         historyBody.appendChild(row);
     });
@@ -558,7 +555,7 @@ async function uploadOldSavedRecords() {
 }
 
 function buildCsv() {
-    const headers = ["Date", "Worker", "Collected", "Sold", "Trays Sold", "Damaged", "Stock Change", "Notes"];
+    const headers = ["Date", "Worker", "Collected", "Sold", "Trays Sold", "Damaged", "Notes"];
     const rows = records
         .slice()
         .sort(function (a, b) {
@@ -572,7 +569,6 @@ function buildCsv() {
                 record.sold,
                 record.traysSold || 0,
                 record.damaged,
-                stockChange(record),
                 record.notes
             ];
         });
