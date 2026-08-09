@@ -219,24 +219,29 @@ function updateTotals() {
         accumulator.stock += stockChange(record);
         return accumulator;
     }, { collected: 0, sold: 0, traysSold: 0, damaged: 0, stock: 0 });
+    const paidLoanEggs = loans.reduce(function (sum, loan) {
+        return String(loan.status || "").toLowerCase() === "paid" ? sum + loanEggTotal(loan) : sum;
+    }, 0);
     const loaned = loans.reduce(function (sum, loan) {
         return String(loan.status || "").toLowerCase() === "paid" ? sum : sum + loanEggTotal(loan);
     }, 0);
+    const totalSold = result.sold + paidLoanEggs;
+    const stockOnHand = result.collected - totalSold - result.damaged;
 
     totals.collected.textContent = formatNumber(result.collected);
-    totals.sold.textContent = formatNumber(result.sold);
+    totals.sold.textContent = formatNumber(totalSold);
     totals.traysSold.textContent = formatNumber(result.traysSold);
     totals.damaged.textContent = formatNumber(result.damaged);
-    totals.stock.textContent = formatNumber(result.stock);
+    totals.stock.textContent = formatNumber(stockOnHand);
     totals.loaned.textContent = formatNumber(loaned);
 
     if (stockDetails.collected) {
         stockDetails.collected.textContent = formatNumber(result.collected);
-        stockDetails.sold.textContent = formatNumber(result.sold);
+        stockDetails.sold.textContent = formatNumber(totalSold);
         stockDetails.damaged.textContent = formatNumber(result.damaged);
-        stockDetails.onHand.textContent = formatNumber(result.stock);
+        stockDetails.onHand.textContent = formatNumber(stockOnHand);
         stockDetails.loaned.textContent = formatNumber(loaned);
-        stockDetails.available.textContent = formatNumber(result.stock - loaned);
+        stockDetails.available.textContent = formatNumber(stockOnHand - loaned);
     }
 }
 
