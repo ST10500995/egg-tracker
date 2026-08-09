@@ -133,7 +133,7 @@ main {
 
 .tab-list {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 0.5rem;
     margin-bottom: 1rem;
     padding: 0.35rem;
@@ -208,6 +208,66 @@ main {
     border-radius: 0.6rem;
 }
 
+
+.stock-panel {
+    border-left: 0.35rem solid var(--blue);
+}
+
+.stock-breakdown {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1rem;
+}
+
+.stock-metric {
+    padding: 1rem;
+    border: 0.0625rem solid var(--line);
+    border-radius: 0.7rem;
+    background: #ffffff;
+}
+
+.stock-metric span {
+    display: block;
+    color: var(--muted);
+    font-weight: 700;
+}
+
+.stock-metric strong {
+    display: block;
+    margin-top: 0.35rem;
+    color: var(--blue);
+    font-size: clamp(1.8rem, 5vw, 2.8rem);
+}
+
+.main-stock {
+    background: var(--blue);
+}
+
+.loan-warning {
+    background: var(--green);
+}
+
+.available-stock {
+    background: var(--yellow);
+}
+
+.main-stock span,
+.main-stock strong,
+.loan-warning span,
+.loan-warning strong {
+    color: #ffffff;
+}
+
+.available-stock span,
+.available-stock strong {
+    color: var(--blue);
+}
+
+.stock-note {
+    margin: 1rem 0 0;
+    color: var(--muted);
+    font-weight: 700;
+}
 .section-heading {
     display: flex;
     align-items: flex-start;
@@ -409,10 +469,12 @@ td {
 
     .number-grid,
     .worker-form,
-    .filter-row {
+    .filter-row,
+    .stock-breakdown {
         grid-template-columns: 1fr;
     }
 
+    
     .section-heading {
         flex-direction: column;
     }
@@ -443,6 +505,7 @@ td {
     }
 
     .tab-list {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 0.25rem;
         padding: 0.25rem;
     }

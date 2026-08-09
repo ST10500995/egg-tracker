@@ -42,6 +42,15 @@ const totals = {
     loaned: document.querySelector("#total-loaned")
 };
 
+const stockDetails = {
+    collected: document.querySelector("#stock-collected"),
+    sold: document.querySelector("#stock-sold"),
+    damaged: document.querySelector("#stock-damaged"),
+    onHand: document.querySelector("#stock-on-hand"),
+    loaned: document.querySelector("#stock-loaned"),
+    available: document.querySelector("#stock-available")
+};
+
 let records = loadRecords();
 let loans = loadLoans();
 let workers = loadWorkers();
@@ -220,6 +229,15 @@ function updateTotals() {
     totals.damaged.textContent = formatNumber(result.damaged);
     totals.stock.textContent = formatNumber(result.stock);
     totals.loaned.textContent = formatNumber(loaned);
+
+    if (stockDetails.collected) {
+        stockDetails.collected.textContent = formatNumber(result.collected);
+        stockDetails.sold.textContent = formatNumber(result.sold);
+        stockDetails.damaged.textContent = formatNumber(result.damaged);
+        stockDetails.onHand.textContent = formatNumber(result.stock);
+        stockDetails.loaned.textContent = formatNumber(loaned);
+        stockDetails.available.textContent = formatNumber(result.stock - loaned);
+    }
 }
 
 function filteredRecords() {

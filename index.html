@@ -53,6 +53,8 @@
                 aria-selected="true" aria-controls="daily-entry-panel" data-tab="daily">Daily Records</button>
             <button class="tab-button" id="loans-tab" type="button" role="tab"
                 aria-selected="false" aria-controls="loan-entry-panel" data-tab="loans">Customer Loans</button>
+            <button class="tab-button" id="stock-tab" type="button" role="tab"
+                aria-selected="false" aria-controls="stock-panel" data-tab="stock">Current Stock</button>
             <button class="tab-button" id="workers-tab" type="button" role="tab"
                 aria-selected="false" aria-controls="workers-panel" data-tab="workers">Workers</button>
         </nav>
@@ -236,6 +238,47 @@
                     <tbody id="history-body"></tbody>
                 </table>
             </div>
+        </section>
+
+        <section id="stock-panel" class="panel stock-panel tab-panel" role="tabpanel"
+            aria-labelledby="stock-tab" data-tab-panel="stock" hidden>
+            <div class="section-heading">
+                <div>
+                    <p class="eyebrow">Stock Room</p>
+                    <h2>Current Stock</h2>
+                </div>
+            </div>
+
+            <div class="stock-breakdown">
+                <article class="stock-metric">
+                    <span>Eggs Collected</span>
+                    <strong id="stock-collected">0</strong>
+                </article>
+                <article class="stock-metric">
+                    <span>Eggs Sold</span>
+                    <strong id="stock-sold">0</strong>
+                </article>
+                <article class="stock-metric">
+                    <span>Damaged Eggs</span>
+                    <strong id="stock-damaged">0</strong>
+                </article>
+                <article class="stock-metric main-stock">
+                    <span>Stock on Hand</span>
+                    <strong id="stock-on-hand">0</strong>
+                </article>
+                <article class="stock-metric loan-warning">
+                    <span>Unpaid Loan Eggs</span>
+                    <strong id="stock-loaned">0</strong>
+                </article>
+                <article class="stock-metric available-stock">
+                    <span>Available Stock</span>
+                    <strong id="stock-available">0</strong>
+                </article>
+            </div>
+
+            <p class="stock-note">
+                Available Stock = Stock on Hand minus unpaid loan eggs.
+            </p>
         </section>
 
         <section class="panel loan-panel tab-panel" data-tab-panel="loans" hidden>
