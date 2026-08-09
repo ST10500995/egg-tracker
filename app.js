@@ -2,7 +2,7 @@ const STORAGE_KEY = "santabogela-egg-tracker-records";
 const WORKERS_KEY = "santabogela-egg-tracker-workers";
 const LOANS_KEY = "santabogela-egg-tracker-loans";
 const SYNC_QUEUE_KEY = "santabogela-egg-tracker-google-sync-queue";
-const GOOGLE_SHEETS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyEC2pTUYmNzjzMhmA0Q6-Rqp947vLWE4I9xcHzQjj3-cUGoWQfsRR5SZ-H87YIX4s/exec";
+const GOOGLE_SHEETS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzw13wrh2pCpevlFBwIMFe53-l-3X1-gxWlR2vcLfrfhpX2v74rqQ0kSUxnDCOBWQ/exec";
 const DEFAULT_WORKERS = [
     "Mashele - Farm Worker",
     "Natalie - Sales",
@@ -198,7 +198,7 @@ function stockChange(record) {
 }
 
 function loanEggTotal(loan) {
-    return loan.eggs + ((loan.trays || 0) * 30);
+    return toNumber(loan.totalEggs) || (loan.eggs + ((loan.trays || 0) * 30));
 }
 
 function updateTotals() {
@@ -211,14 +211,14 @@ function updateTotals() {
         return accumulator;
     }, { collected: 0, sold: 0, traysSold: 0, damaged: 0, stock: 0 });
     const loaned = loans.reduce(function (sum, loan) {
-        return loan.status === "Paid" ? sum : sum + loanEggTotal(loan);
+        return String(loan.status || "").toLowerCase() === "paid" ? sum : sum + loanEggTotal(loan);
     }, 0);
 
     totals.collected.textContent = formatNumber(result.collected);
     totals.sold.textContent = formatNumber(result.sold);
     totals.traysSold.textContent = formatNumber(result.traysSold);
     totals.damaged.textContent = formatNumber(result.damaged);
-    totals.stock.textContent = formatNumber(result.stock - loaned);
+    totals.stock.textContent = formatNumber(result.stock);
     totals.loaned.textContent = formatNumber(loaned);
 }
 
@@ -302,7 +302,7 @@ function renderLoans() {
         cells[4].textContent = formatNumber(loan.trays || 0);
         cells[5].textContent = "R " + Number(loan.amount || 0).toFixed(2);
         cells[6].textContent = loan.status;
-        cells[6].className = loan.status === "Paid" ? "positive" : "negative";
+        cells[6].className = String(loan.status || "").toLowerCase() === "paid" ? "positive" : "negative";
         cells[7].textContent = loan.notes || "-";
 
         loanBody.appendChild(row);
@@ -464,6 +464,7 @@ async function loadSharedGoogleSheetData(options) {
                 customer: loan.customer || "",
                 eggs: toNumber(loan.eggs),
                 trays: toNumber(loan.trays),
+                totalEggs: toNumber(loan.totalEggs),
                 amount: Number.parseFloat(loan.amount) || 0,
                 status: loan.status || "Unpaid",
                 notes: loan.notes || "",
@@ -818,11 +819,3 @@ flushGoogleSheetSync().then(function () {
     return loadSharedGoogleSheetData({ showStatus: true });
 });
 window.setInterval(loadSharedGoogleSheetData, 60000);
-
-
-
-
-
-
-
-
