@@ -360,11 +360,15 @@ function isGoogleSheetsConnected() {
 }
 
 function queueGoogleSheetSync(type, item) {
+    const isDailyRecord = type === "daily_record";
     const payload = {
         type: type,
+        action: isDailyRecord ? "daily" : "loan",
         app: "Santabogela Egg Tracker",
         sentAt: new Date().toISOString(),
-        item: item
+        item: item,
+        record: isDailyRecord ? item : undefined,
+        loan: isDailyRecord ? undefined : item
     };
 
     syncQueue.push(payload);

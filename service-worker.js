@@ -1,4 +1,4 @@
-const CACHE_NAME = "egg-tracker-v6";
+const CACHE_NAME = "egg-tracker-v7";
 const APP_FILES = [
     "./",
     "./index.html",
@@ -41,6 +41,3 @@ self.addEventListener("fetch", function (event) {
         })
     );
 });
-
-
-
