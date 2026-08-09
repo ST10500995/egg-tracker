@@ -147,6 +147,35 @@ function formatDate(value) {
     }).format(new Date(value + "T00:00:00"));
 }
 
+function normalizeDateValue(value) {
+    if (!value) {
+        return "";
+    }
+
+    if (/^\d{4}-\d{2}-\d{2}$/.test(String(value))) {
+        return String(value);
+    }
+
+    const parsed = new Date(value);
+    if (Number.isNaN(parsed.getTime())) {
+        return String(value).slice(0, 10);
+    }
+
+    return parsed.toISOString().slice(0, 10);
+}
+
+function uniqueById(items) {
+    const seen = new Set();
+    return items.filter(function (item) {
+        if (!item.id || seen.has(item.id)) {
+            return false;
+        }
+
+        seen.add(item.id);
+        return true;
+    });
+}
+
 function stockChange(record) {
     return record.collected - record.sold - ((record.traysSold || 0) * 30) - record.damaged;
 }
@@ -354,6 +383,75 @@ async function flushGoogleSheetSync() {
     return remaining.length === 0;
 }
 
+async function loadSharedGoogleSheetData(options) {
+    const shouldShowStatus = options && options.showStatus;
+
+    if (!isGoogleSheetsConnected() || !navigator.onLine) {
+        return false;
+    }
+
+    try {
+        if (shouldShowStatus) {
+            showSavedMessage("Refreshing shared Google Sheet data...");
+        }
+
+        const response = await fetch(GOOGLE_SHEETS_WEB_APP_URL + "?action=read&cacheBust=" + Date.now(), {
+            method: "GET",
+            cache: "no-store"
+        });
+        const data = await response.json();
+
+        if (!data.ok) {
+            throw new Error(data.error || "Google Sheets did not return shared records.");
+        }
+
+        records = uniqueById((data.records || []).map(function (record) {
+            return {
+                id: record.id,
+                date: normalizeDateValue(record.date),
+                worker: record.worker || "",
+                collected: toNumber(record.collected),
+                sold: toNumber(record.sold),
+                traysSold: toNumber(record.traysSold),
+                damaged: toNumber(record.damaged),
+                notes: record.notes || "",
+                createdAt: Number(record.createdAt) || Date.now()
+            };
+        }));
+
+        loans = uniqueById((data.loans || []).map(function (loan) {
+            return {
+                id: loan.id,
+                date: normalizeDateValue(loan.date),
+                worker: loan.worker || "",
+                customer: loan.customer || "",
+                eggs: toNumber(loan.eggs),
+                trays: toNumber(loan.trays),
+                amount: Number.parseFloat(loan.amount) || 0,
+                status: loan.status || "Unpaid",
+                notes: loan.notes || "",
+                createdAt: Number(loan.createdAt) || Date.now()
+            };
+        }));
+
+        saveRecords();
+        saveLoans();
+        render();
+
+        if (shouldShowStatus) {
+            showSavedMessage("Shared Google Sheet data refreshed.");
+        }
+
+        return true;
+    } catch (error) {
+        if (shouldShowStatus) {
+            showSavedMessage("Could not refresh Google Sheet data yet.");
+        }
+
+        return false;
+    }
+}
+
 function buildCsv() {
     const headers = ["Date", "Worker", "Collected", "Sold", "Trays Sold", "Damaged", "Stock Change", "Notes"];
     const rows = records
@@ -474,7 +572,10 @@ form.addEventListener("submit", async function (event) {
     } else {
         showSavedMessage("Daily entry saved. Sending to Google Sheets...");
         const synced = await queueGoogleSheetSync("daily_record", record);
-        showSavedMessage(synced ? "Daily entry saved and sent to Google Sheets." : "Daily entry saved. It will sync when internet returns.");
+                if (synced) {
+            await loadSharedGoogleSheetData();
+        }
+        showSavedMessage(synced ? "Daily entry saved and shared with all devices." : "Daily entry saved. It will sync when internet returns.");
     }
 
     render();
@@ -516,7 +617,10 @@ loanForm.addEventListener("submit", async function (event) {
     } else {
         loanStatus.textContent = "Loan record saved. Sending to Google Sheets...";
         const synced = await queueGoogleSheetSync("customer_loan", loan);
-        loanStatus.textContent = synced ? "Loan record saved and sent to Google Sheets." : "Loan record saved. It will sync when internet returns.";
+                if (synced) {
+            await loadSharedGoogleSheetData();
+        }
+        loanStatus.textContent = synced ? "Loan record saved and shared with all devices." : "Loan record saved. It will sync when internet returns.";
     }
 
     window.setTimeout(function () {
@@ -584,7 +688,10 @@ window.addEventListener("beforeinstallprompt", function (event) {
     installButton.hidden = false;
 });
 
-window.addEventListener("online", flushGoogleSheetSync);
+window.addEventListener("online", async function () {
+    await flushGoogleSheetSync();
+    await loadSharedGoogleSheetData();
+});
 
 installButton.addEventListener("click", async function () {
     if (!deferredInstallPrompt) {
@@ -606,4 +713,8 @@ document.querySelector("#loan-date").value = today();
 selectTab("daily");
 renderWorkers();
 render();
-flushGoogleSheetSync();
+flushGoogleSheetSync().then(function () {
+    return loadSharedGoogleSheetData({ showStatus: true });
+});
+window.setInterval(loadSharedGoogleSheetData, 60000);
+

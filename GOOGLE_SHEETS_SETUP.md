@@ -94,6 +94,67 @@ function doPost(e) {
     .setMimeType(ContentService.MimeType.JSON);
 }
 
+function doGet(e) {
+  const action = e && e.parameter && e.parameter.action;
+
+  if (action !== "read") {
+    return jsonResponse({ ok: true, message: "Santabogela Egg Tracker bridge is running." });
+  }
+
+  const spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const records = readDailyRecords(spreadsheet);
+  const loans = readCustomerLoans(spreadsheet);
+
+  return jsonResponse({
+    ok: true,
+    records: records,
+    loans: loans
+  });
+}
+
+function readDailyRecords(spreadsheet) {
+  const sheet = getSheet(spreadsheet, "Daily Records", DAILY_HEADERS);
+  const values = sheet.getDataRange().getValues();
+
+  return values.slice(1).filter(function (row) {
+    return row[1];
+  }).map(function (row) {
+    return {
+      id: row[1],
+      date: toIsoDate(row[2]),
+      worker: row[3],
+      collected: Number(row[4]) || 0,
+      sold: Number(row[5]) || 0,
+      traysSold: Number(row[6]) || 0,
+      damaged: Number(row[7]) || 0,
+      notes: row[8] || "",
+      createdAt: toTimestamp(row[9])
+    };
+  });
+}
+
+function readCustomerLoans(spreadsheet) {
+  const sheet = getSheet(spreadsheet, "Customer Loans", LOAN_HEADERS);
+  const values = sheet.getDataRange().getValues();
+
+  return values.slice(1).filter(function (row) {
+    return row[1];
+  }).map(function (row) {
+    return {
+      id: row[1],
+      date: toIsoDate(row[2]),
+      worker: row[3],
+      customer: row[4],
+      eggs: Number(row[5]) || 0,
+      trays: Number(row[6]) || 0,
+      amount: Number(row[8]) || 0,
+      status: row[9] || "Unpaid",
+      notes: row[10] || "",
+      createdAt: toTimestamp(row[11])
+    };
+  });
+}
+
 function getSheet(spreadsheet, sheetName, headers) {
   let sheet = spreadsheet.getSheetByName(sheetName);
 
@@ -107,6 +168,36 @@ function getSheet(spreadsheet, sheetName, headers) {
   }
 
   return sheet;
+}
+
+function toIsoDate(value) {
+  if (!value) {
+    return "";
+  }
+
+  if (Object.prototype.toString.call(value) === "[object Date]") {
+    return Utilities.formatDate(value, Session.getScriptTimeZone(), "yyyy-MM-dd");
+  }
+
+  return String(value).slice(0, 10);
+}
+
+function toTimestamp(value) {
+  if (!value) {
+    return Date.now();
+  }
+
+  if (Object.prototype.toString.call(value) === "[object Date]") {
+    return value.getTime();
+  }
+
+  return Number(value) || Date.now();
+}
+
+function jsonResponse(data) {
+  return ContentService
+    .createTextOutput(JSON.stringify(data))
+    .setMimeType(ContentService.MimeType.JSON);
 }
 ```
 
@@ -135,3 +226,4 @@ const GOOGLE_SHEETS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwsuA
 ```
 
 Then Codex will push the update to GitHub Pages.
+
