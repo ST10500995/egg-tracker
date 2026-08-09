@@ -194,7 +194,7 @@ function mergeUniqueById(primaryItems, secondaryItems) {
 }
 
 function stockChange(record) {
-    return record.collected - record.sold - ((record.traysSold || 0) * 30) - record.damaged;
+    return record.collected - record.sold - record.damaged;
 }
 
 function loanEggTotal(loan) {
