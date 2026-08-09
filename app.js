@@ -488,7 +488,9 @@ async function uploadOldSavedRecords() {
     showSavedMessage("Checking old saved records...");
 
     try {
-        await loadSharedGoogleSheetData({ keepLocalRecords: true });
+        const localRecords = loadRecords();
+        const localLoans = loadLoans();
+        await loadSharedGoogleSheetData();
 
         const syncedDailyIds = new Set((records || []).map(function (record) {
             return record.id;
@@ -496,8 +498,6 @@ async function uploadOldSavedRecords() {
         const syncedLoanIds = new Set((loans || []).map(function (loan) {
             return loan.id;
         }));
-        const localRecords = loadRecords();
-        const localLoans = loadLoans();
         let uploadedCount = 0;
 
         for (const record of localRecords) {
@@ -799,6 +799,7 @@ flushGoogleSheetSync().then(function () {
     return loadSharedGoogleSheetData({ showStatus: true });
 });
 window.setInterval(loadSharedGoogleSheetData, 60000);
+
 
 
 
