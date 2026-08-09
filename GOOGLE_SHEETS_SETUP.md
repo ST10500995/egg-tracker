@@ -225,5 +225,17 @@ Codex will paste it into `app.js` here:
 const GOOGLE_SHEETS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwsuAOcDrZQmH7ksvoOQLy4EvC2KQpd41lCL--LWgRry_wUSJXPVYAgm70M7916Z_ZH/exec";
 ```
 
+
+
+function doGet(e) {
+  return ContentService
+    .createTextOutput(JSON.stringify({
+      ok: true,
+      records: [],
+      loans: []
+    }))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
 Then Codex will push the update to GitHub Pages.
 
