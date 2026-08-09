@@ -28,6 +28,7 @@ const rangeSelect = document.querySelector("#history-range");
 const exportButton = document.querySelector("#export-button");
 const exportLoansButton = document.querySelector("#export-loans-button");
 const clearButton = document.querySelector("#clear-button");
+const syncOldButton = document.querySelector("#sync-old-button");
 const installButton = document.querySelector("#install-button");
 const tabButtons = document.querySelectorAll("[data-tab]");
 const tabPanels = document.querySelectorAll("[data-tab-panel]");
@@ -174,6 +175,22 @@ function uniqueById(items) {
         seen.add(item.id);
         return true;
     });
+}
+
+function mergeUniqueById(primaryItems, secondaryItems) {
+    const merged = [];
+    const seen = new Set();
+
+    primaryItems.concat(secondaryItems).forEach(function (item) {
+        if (!item.id || seen.has(item.id)) {
+            return;
+        }
+
+        seen.add(item.id);
+        merged.push(item);
+    });
+
+    return merged;
 }
 
 function stockChange(record) {
@@ -385,6 +402,7 @@ async function flushGoogleSheetSync() {
 
 async function loadSharedGoogleSheetData(options) {
     const shouldShowStatus = options && options.showStatus;
+    const keepLocalRecords = options && options.keepLocalRecords;
 
     if (!isGoogleSheetsConnected() || !navigator.onLine) {
         return false;
@@ -405,7 +423,7 @@ async function loadSharedGoogleSheetData(options) {
             throw new Error(data.error || "Google Sheets did not return shared records.");
         }
 
-        records = uniqueById((data.records || []).map(function (record) {
+        const sharedRecords = uniqueById((data.records || []).map(function (record) {
             return {
                 id: record.id,
                 date: normalizeDateValue(record.date),
@@ -419,7 +437,7 @@ async function loadSharedGoogleSheetData(options) {
             };
         }));
 
-        loans = uniqueById((data.loans || []).map(function (loan) {
+        const sharedLoans = uniqueById((data.loans || []).map(function (loan) {
             return {
                 id: loan.id,
                 date: normalizeDateValue(loan.date),
@@ -433,6 +451,9 @@ async function loadSharedGoogleSheetData(options) {
                 createdAt: Number(loan.createdAt) || Date.now()
             };
         }));
+
+        records = keepLocalRecords ? mergeUniqueById(sharedRecords, records) : sharedRecords;
+        loans = keepLocalRecords ? mergeUniqueById(sharedLoans, loans) : sharedLoans;
 
         saveRecords();
         saveLoans();
@@ -449,6 +470,66 @@ async function loadSharedGoogleSheetData(options) {
         }
 
         return false;
+    }
+}
+
+async function uploadOldSavedRecords() {
+    if (!isGoogleSheetsConnected()) {
+        showSavedMessage("Google Sheets is not connected yet.");
+        return;
+    }
+
+    if (!navigator.onLine) {
+        showSavedMessage("Connect to the internet before uploading old records.");
+        return;
+    }
+
+    syncOldButton.disabled = true;
+    showSavedMessage("Checking old saved records...");
+
+    try {
+        await loadSharedGoogleSheetData({ keepLocalRecords: true });
+
+        const syncedDailyIds = new Set((records || []).map(function (record) {
+            return record.id;
+        }));
+        const syncedLoanIds = new Set((loans || []).map(function (loan) {
+            return loan.id;
+        }));
+        const localRecords = loadRecords();
+        const localLoans = loadLoans();
+        let uploadedCount = 0;
+
+        for (const record of localRecords) {
+            if (!record.id || syncedDailyIds.has(record.id)) {
+                continue;
+            }
+
+            const synced = await queueGoogleSheetSync("daily_record", record);
+            if (synced) {
+                uploadedCount += 1;
+                syncedDailyIds.add(record.id);
+            }
+        }
+
+        for (const loan of localLoans) {
+            if (!loan.id || syncedLoanIds.has(loan.id)) {
+                continue;
+            }
+
+            const synced = await queueGoogleSheetSync("customer_loan", loan);
+            if (synced) {
+                uploadedCount += 1;
+                syncedLoanIds.add(loan.id);
+            }
+        }
+
+        await loadSharedGoogleSheetData({ keepLocalRecords: true });
+        showSavedMessage(uploadedCount > 0 ? "Uploaded " + uploadedCount + " old saved record(s)." : "No old records needed uploading.");
+    } catch (error) {
+        showSavedMessage("Could not upload old records yet. Try again.");
+    } finally {
+        syncOldButton.disabled = false;
     }
 }
 
@@ -663,6 +744,7 @@ workerForm.addEventListener("submit", function (event) {
 searchInput.addEventListener("input", renderHistory);
 rangeSelect.addEventListener("change", renderHistory);
 exportButton.addEventListener("click", downloadCsv);
+syncOldButton.addEventListener("click", uploadOldSavedRecords);
 exportLoansButton.addEventListener("click", downloadLoansCsv);
 
 clearButton.addEventListener("click", function () {
@@ -717,5 +799,7 @@ flushGoogleSheetSync().then(function () {
     return loadSharedGoogleSheetData({ showStatus: true });
 });
 window.setInterval(loadSharedGoogleSheetData, 60000);
+
+
 
 
