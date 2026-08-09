@@ -400,6 +400,29 @@ async function flushGoogleSheetSync() {
     return remaining.length === 0;
 }
 
+function loadGoogleSheetJsonp() {
+    return new Promise(function (resolve, reject) {
+        const callbackName = "santabogelaSheetCallback" + Date.now() + Math.random().toString(16).slice(2);
+        const script = document.createElement("script");
+        const separator = GOOGLE_SHEETS_WEB_APP_URL.includes("?") ? "&" : "?";
+
+        window[callbackName] = function (data) {
+            delete window[callbackName];
+            script.remove();
+            resolve(data);
+        };
+
+        script.onerror = function () {
+            delete window[callbackName];
+            script.remove();
+            reject(new Error("Could not load Google Sheets data."));
+        };
+
+        script.src = GOOGLE_SHEETS_WEB_APP_URL + separator + "action=read&callback=" + encodeURIComponent(callbackName) + "&cacheBust=" + Date.now();
+        document.body.appendChild(script);
+    });
+}
+
 async function loadSharedGoogleSheetData(options) {
     const shouldShowStatus = options && options.showStatus;
     const keepLocalRecords = options && options.keepLocalRecords;
@@ -413,11 +436,7 @@ async function loadSharedGoogleSheetData(options) {
             showSavedMessage("Refreshing shared Google Sheet data...");
         }
 
-        const response = await fetch(GOOGLE_SHEETS_WEB_APP_URL + "?action=read&cacheBust=" + Date.now(), {
-            method: "GET",
-            cache: "no-store"
-        });
-        const data = await response.json();
+        const data = await loadGoogleSheetJsonp();
 
         if (!data.ok) {
             throw new Error(data.error || "Google Sheets did not return shared records.");
@@ -799,6 +818,7 @@ flushGoogleSheetSync().then(function () {
     return loadSharedGoogleSheetData({ showStatus: true });
 });
 window.setInterval(loadSharedGoogleSheetData, 60000);
+
 
 
 
