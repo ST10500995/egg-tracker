@@ -2,7 +2,7 @@ const STORAGE_KEY = "santabogela-egg-tracker-records";
 const WORKERS_KEY = "santabogela-egg-tracker-workers";
 const LOANS_KEY = "santabogela-egg-tracker-loans";
 const SYNC_QUEUE_KEY = "santabogela-egg-tracker-google-sync-queue";
-const GOOGLE_SHEETS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzw13wrh2pCpevlFBwIMFe53-l-3X1-gxWlR2vcLfrfhpX2v74rqQ0kSUxnDCOBWQ/exec";
+const GOOGLE_SHEETS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbz-O8Tz4ThgdFxMBwig0m_YdhDHdKuw3T2LWb6Iy7c_1FwqRwiKPCREC-f1Al9ZvNWo/exec";
 const DEFAULT_WORKERS = [
     "Mashele - Farm Worker",
     "Natalie - Sales",
