@@ -1,4 +1,4 @@
-const CACHE_NAME = "egg-tracker-v10";
+const CACHE_NAME = "egg-tracker-v11";
 const APP_FILES = [
     "./",
     "./index.html",
@@ -12,7 +12,9 @@ const APP_FILES = [
 self.addEventListener("install", function (event) {
     event.waitUntil(
         caches.open(CACHE_NAME).then(function (cache) {
-            return cache.addAll(APP_FILES);
+            return cache.addAll(APP_FILES).then(function () {
+                return self.skipWaiting();
+            });
         })
     );
 });
@@ -25,7 +27,9 @@ self.addEventListener("activate", function (event) {
                     return caches.delete(key);
                 }
                 return null;
-            }));
+            })).then(function () {
+                return self.clients.claim();
+            });
         })
     );
 });
