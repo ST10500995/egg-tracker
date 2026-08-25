@@ -174,6 +174,20 @@ function normalizeDateValue(value) {
     return parsed.toISOString().slice(0, 10);
 }
 
+function isUuid(value) {
+    return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(value || ""));
+}
+
+function isInvalidSharedDailyRecord(record) {
+    return !record || !record.id || !record.date || !record.worker || isUuid(record.worker);
+}
+
+function isInvalidSharedLoan(loan) {
+    return !loan || !loan.id || !loan.date || !loan.worker || !loan.customer ||
+        isUuid(loan.customer) || /^\d{4}-\d{2}-\d{2}T/.test(String(loan.worker)) ||
+        !["Unpaid", "Partly Paid", "Paid"].includes(String(loan.status || ""));
+}
+
 function uniqueById(items) {
     const seen = new Set();
     return items.filter(function (item) {
@@ -466,6 +480,10 @@ async function loadSharedGoogleSheetData(options) {
             throw new Error(data.error || "Google Sheets did not return shared records.");
         }
 
+        if ((data.records || []).some(isInvalidSharedDailyRecord) || (data.loans || []).some(isInvalidSharedLoan)) {
+            throw new Error("The shared sheet has an invalid column layout. No new sheet data was saved on this device.");
+        }
+
         const sharedRecords = uniqueById((data.records || []).map(function (record) {
             return {
                 id: record.id,
@@ -509,8 +527,9 @@ async function loadSharedGoogleSheetData(options) {
 
         return true;
     } catch (error) {
+        console.error(error);
         if (shouldShowStatus) {
-            showSavedMessage("Could not refresh Google Sheet data yet.");
+            showSavedMessage("Shared sheet needs repair. Existing phone records were kept safe.");
         }
 
         return false;
