@@ -28,6 +28,7 @@ const rangeSelect = document.querySelector("#history-range");
 const exportButton = document.querySelector("#export-button");
 const exportLoansButton = document.querySelector("#export-loans-button");
 const clearButton = document.querySelector("#clear-button");
+const paidButton = document.querySelector("#paid-button");
 const syncOldButton = document.querySelector("#sync-old-button");
 const installButton = document.querySelector("#install-button");
 const tabButtons = document.querySelectorAll("[data-tab]");
@@ -216,37 +217,54 @@ function mergeUniqueById(primaryItems, secondaryItems) {
     return merged;
 }
 
+function recordSoldEggs(record) {
+    return toNumber(record.sold) + (toNumber(record.traysSold) * 30);
+}
+
 function stockChange(record) {
-    return record.collected - record.sold - record.damaged;
+    return toNumber(record.collected) - recordSoldEggs(record) - toNumber(record.damaged);
 }
 
 function loanEggTotal(loan) {
-    return toNumber(loan.totalEggs) || (loan.eggs + ((loan.trays || 0) * 30));
+    return toNumber(loan.totalEggs) || (toNumber(loan.eggs) + (toNumber(loan.trays) * 30));
 }
 
 function updateTotals() {
     const result = records.reduce(function (accumulator, record) {
-        accumulator.collected += record.collected;
-        accumulator.sold += record.sold;
-        accumulator.traysSold += record.traysSold || 0;
-        accumulator.damaged += record.damaged;
+        accumulator.collected += toNumber(record.collected);
+        accumulator.sold += recordSoldEggs(record);
+        accumulator.traysSold += toNumber(record.traysSold);
+        accumulator.damaged += toNumber(record.damaged);
         accumulator.stock += stockChange(record);
         return accumulator;
     }, { collected: 0, sold: 0, traysSold: 0, damaged: 0, stock: 0 });
+
     const paidLoanEggs = loans.reduce(function (sum, loan) {
-        return String(loan.status || "").toLowerCase() === "paid" ? sum + loanEggTotal(loan) : sum;
+        return String(loan.status || "").toLowerCase() === "paid"
+            ? sum + loanEggTotal(loan)
+            : sum;
     }, 0);
+
     const loaned = loans.reduce(function (sum, loan) {
-        return String(loan.status || "").toLowerCase() === "paid" ? sum : sum + loanEggTotal(loan);
+        return String(loan.status || "").toLowerCase() === "paid"
+            ? sum
+            : sum + loanEggTotal(loan);
     }, 0);
+
+    // Paid loans are completed sales.
     const totalSold = result.sold + paidLoanEggs;
+
+    // Physical stock remaining after sales and damaged eggs.
     const stockOnHand = result.collected - totalSold - result.damaged;
+
+    // Available stock excludes eggs currently loaned to customers.
+    const availableStock = stockOnHand - loaned;
 
     totals.collected.textContent = formatNumber(result.collected);
     totals.sold.textContent = formatNumber(totalSold);
     totals.traysSold.textContent = formatNumber(result.traysSold);
     totals.damaged.textContent = formatNumber(result.damaged);
-    totals.stock.textContent = formatNumber(stockOnHand);
+    totals.stock.textContent = formatNumber(availableStock);
     totals.loaned.textContent = formatNumber(loaned);
 
     if (stockDetails.collected) {
@@ -255,7 +273,40 @@ function updateTotals() {
         stockDetails.damaged.textContent = formatNumber(result.damaged);
         stockDetails.onHand.textContent = formatNumber(stockOnHand);
         stockDetails.loaned.textContent = formatNumber(loaned);
-        stockDetails.available.textContent = formatNumber(stockOnHand - loaned);
+        stockDetails.available.textContent = formatNumber(availableStock);
+    }
+}
+
+async function recalculatePaidTotals() {
+    const button = document.querySelector("#paid-button");
+
+    if (button) {
+        button.disabled = true;
+        button.textContent = "Recalculating...";
+    }
+
+    try {
+        // Pull the latest shared records first so a payment/status change
+        // made on another phone is included in the calculation.
+        if (isGoogleSheetsConnected() && navigator.onLine) {
+            await flushGoogleSheetSync();
+            await loadSharedGoogleSheetData();
+        }
+
+        updateTotals();
+        renderHistory();
+        renderLoans();
+
+        showSavedMessage("Paid totals recalculated successfully.");
+    } catch (error) {
+        console.error(error);
+        updateTotals();
+        showSavedMessage("Totals recalculated from the saved records on this phone.");
+    } finally {
+        if (button) {
+            button.disabled = false;
+            button.textContent = "✓ Paid — Recalculate Totals";
+        }
     }
 }
 
@@ -808,6 +859,7 @@ rangeSelect.addEventListener("change", renderHistory);
 exportButton.addEventListener("click", downloadCsv);
 syncOldButton.addEventListener("click", uploadOldSavedRecords);
 exportLoansButton.addEventListener("click", downloadLoansCsv);
+paidButton.addEventListener("click", recalculatePaidTotals);
 
 clearButton.addEventListener("click", function () {
     if (records.length === 0) {
