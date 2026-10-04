@@ -556,3 +556,54 @@ td {
         font-weight: 700;
     }
 }
+
+/* Payment controls */
+.dashboard-payment-action {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin: 14px 0 20px;
+}
+
+.paid-button {
+    border: 0;
+    border-radius: 8px;
+    padding: 11px 18px;
+    font-weight: 700;
+    cursor: pointer;
+    background: #198754;
+    color: #fff;
+    box-shadow: 0 2px 5px rgba(0,0,0,.12);
+}
+
+.paid-button:hover {
+    background: #157347;
+}
+
+.paid-button:active {
+    transform: translateY(1px);
+}
+
+.dashboard-paid-status {
+    font-size: .9rem;
+    font-weight: 600;
+}
+
+.loan-payment-cell {
+    white-space: nowrap;
+}
+
+.loan-paid-button {
+    border: 0;
+    border-radius: 6px;
+    padding: 7px 11px;
+    cursor: pointer;
+    font-weight: 700;
+    background: #198754;
+    color: #fff;
+}
+
+.loan-paid-button:hover {
+    background: #157347;
+}

@@ -47,6 +47,13 @@
                 <strong id="total-loaned">0</strong>
             </article>
         </section>
+    <div class="dashboard-payment-action">
+        <button id="dashboard-paid-button" class="paid-button" type="button">
+            ✓ Paid — Select Customer & Recalculate
+        </button>
+        <span id="dashboard-paid-status" class="dashboard-paid-status" aria-live="polite"></span>
+    </div>
+
 
         <nav class="tab-list" role="tablist" aria-label="Egg tracker sections">
             <button class="tab-button is-active" id="daily-tab" type="button" role="tab"
@@ -305,6 +312,7 @@
                             <th>Trays</th>
                             <th>Amount</th>
                             <th>Status</th>
+                            <th>Payment</th>
                             <th>Notes</th>
                         </tr>
                     </thead>
@@ -335,11 +343,12 @@
             <td data-label="Trays"></td>
             <td data-label="Amount"></td>
             <td data-label="Status"></td>
+            <td data-label="Payment" class="loan-payment-cell"></td>
             <td data-label="Notes"></td>
         </tr>
     </template>
 
-    <script src="app.js?v=20260825"></script>
+    <script src="app.js?v=20261004"></script>
 </body>
 
 </html>

@@ -30,6 +30,8 @@ const exportLoansButton = document.querySelector("#export-loans-button");
 const clearButton = document.querySelector("#clear-button");
 const syncOldButton = document.querySelector("#sync-old-button");
 const installButton = document.querySelector("#install-button");
+const dashboardPaidButton = document.querySelector("#dashboard-paid-button");
+const dashboardPaidStatus = document.querySelector("#dashboard-paid-status");
 const tabButtons = document.querySelectorAll("[data-tab]");
 const tabPanels = document.querySelectorAll("[data-tab-panel]");
 
@@ -216,20 +218,24 @@ function mergeUniqueById(primaryItems, secondaryItems) {
     return merged;
 }
 
+function recordSoldEggs(record) {
+    return toNumber(record.sold) + (toNumber(record.traysSold) * 30);
+}
+
 function stockChange(record) {
-    return record.collected - record.sold - record.damaged;
+    return toNumber(record.collected) - recordSoldEggs(record) - toNumber(record.damaged);
 }
 
 function loanEggTotal(loan) {
-    return toNumber(loan.totalEggs) || (loan.eggs + ((loan.trays || 0) * 30));
+    return toNumber(loan.totalEggs) || (toNumber(loan.eggs) + (toNumber(loan.trays) * 30));
 }
 
 function updateTotals() {
     const result = records.reduce(function (accumulator, record) {
-        accumulator.collected += record.collected;
-        accumulator.sold += record.sold;
-        accumulator.traysSold += record.traysSold || 0;
-        accumulator.damaged += record.damaged;
+        accumulator.collected += toNumber(record.collected);
+        accumulator.sold += recordSoldEggs(record);
+        accumulator.traysSold += toNumber(record.traysSold);
+        accumulator.damaged += toNumber(record.damaged);
         accumulator.stock += stockChange(record);
         return accumulator;
     }, { collected: 0, sold: 0, traysSold: 0, damaged: 0, stock: 0 });
@@ -332,15 +338,145 @@ function renderLoans() {
         cells[0].textContent = formatDate(loan.date);
         cells[1].textContent = loan.customer;
         cells[2].textContent = loan.worker;
-        cells[3].textContent = formatNumber(loan.eggs);
+        cells[3].textContent = formatNumber(loan.eggs || 0);
         cells[4].textContent = formatNumber(loan.trays || 0);
         cells[5].textContent = "R " + Number(loan.amount || 0).toFixed(2);
         cells[6].textContent = loan.status;
-        cells[6].className = String(loan.status || "").toLowerCase() === "paid" ? "positive" : "negative";
-        cells[7].textContent = loan.notes || "-";
+        cells[6].className =
+            String(loan.status || "").toLowerCase() === "paid"
+                ? "positive"
+                : "negative";
 
+        const paymentCell = cells[7];
+
+        if (String(loan.status || "").toLowerCase() === "paid") {
+            paymentCell.textContent = "Paid";
+            paymentCell.className = "loan-payment-cell positive";
+        } else {
+            const paidButton = document.createElement("button");
+            paidButton.type = "button";
+            paidButton.className = "loan-paid-button";
+            paidButton.textContent = "Mark Paid";
+            paidButton.addEventListener("click", function () {
+                markLoanPaid(loan.id);
+            });
+            paymentCell.appendChild(paidButton);
+        }
+
+        cells[8].textContent = loan.notes || "-";
         loanBody.appendChild(row);
     });
+}
+
+async function markLoanPaid(loanId) {
+    const loan = loans.find(function (item) {
+        return item.id === loanId;
+    });
+
+    if (!loan) {
+        return;
+    }
+
+    if (String(loan.status || "").toLowerCase() === "paid") {
+        updateTotals();
+        renderLoans();
+        return;
+    }
+
+    const confirmed = window.confirm(
+        "Mark " + loan.customer + " as PAID?\n\n" +
+        loanEggTotal(loan) +
+        " eggs will move from unpaid loan stock to Sold."
+    );
+
+    if (!confirmed) {
+        return;
+    }
+
+    loan.status = "Paid";
+    loan.paidAt = new Date().toISOString();
+
+    saveLoans();
+    updateTotals();
+    renderLoans();
+
+    if (dashboardPaidStatus) {
+        dashboardPaidStatus.textContent =
+            loan.customer + " marked Paid. Totals recalculated.";
+    }
+
+    if (isGoogleSheetsConnected()) {
+        const synced = await queueGoogleSheetSync("customer_loan", loan);
+
+        if (synced) {
+            await loadSharedGoogleSheetData();
+            if (dashboardPaidStatus) {
+                dashboardPaidStatus.textContent =
+                    loan.customer + " marked Paid and totals recalculated.";
+            }
+        } else if (dashboardPaidStatus) {
+            dashboardPaidStatus.textContent =
+                loan.customer + " marked Paid on this device. Sync will retry.";
+        }
+    }
+
+    window.setTimeout(function () {
+        if (dashboardPaidStatus) {
+            dashboardPaidStatus.textContent = "";
+        }
+    }, 4000);
+}
+
+function dashboardPaidAction() {
+    const unpaidLoans = loans.filter(function (loan) {
+        return String(loan.status || "").toLowerCase() !== "paid";
+    });
+
+    if (unpaidLoans.length === 0) {
+        updateTotals();
+        renderLoans();
+
+        if (dashboardPaidStatus) {
+            dashboardPaidStatus.textContent =
+                "No unpaid loans. Totals recalculated.";
+        }
+
+        window.setTimeout(function () {
+            if (dashboardPaidStatus) dashboardPaidStatus.textContent = "";
+        }, 3000);
+
+        return;
+    }
+
+    const choices = unpaidLoans.map(function (loan, index) {
+        return (index + 1) + ". " +
+            loan.customer + " — " +
+            loanEggTotal(loan) + " eggs";
+    }).join("\n");
+
+    const answer = window.prompt(
+        "Which customer has PAID? Enter the number:\n\n" + choices
+    );
+
+    if (answer === null) {
+        return;
+    }
+
+    const selectedIndex = Number.parseInt(answer, 10) - 1;
+
+    if (!Number.isInteger(selectedIndex) ||
+        selectedIndex < 0 ||
+        selectedIndex >= unpaidLoans.length) {
+
+        if (dashboardPaidStatus) {
+            dashboardPaidStatus.textContent =
+                "Invalid customer selection. No changes made.";
+        }
+
+        return;
+    }
+
+    markLoanPaid(unpaidLoans[selectedIndex].id);
 }
 
 function render() {
@@ -808,6 +944,10 @@ rangeSelect.addEventListener("change", renderHistory);
 exportButton.addEventListener("click", downloadCsv);
 syncOldButton.addEventListener("click", uploadOldSavedRecords);
 exportLoansButton.addEventListener("click", downloadLoansCsv);
+
+if (dashboardPaidButton) {
+    dashboardPaidButton.addEventListener("click", dashboardPaidAction);
+}
 
 clearButton.addEventListener("click", function () {
     if (records.length === 0) {
